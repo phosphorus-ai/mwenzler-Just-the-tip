@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Just the Tip</title>
+<meta name="theme-color" content="#0B0710" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Just the Tip" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="icon" type="image/svg+xml" href="icon.svg" />
+<style>
+  :root{
+    --bg:#0B0710; --surface:#15101D; --card:#1C1526; --card2:#241A30;
+    --line:#2C2238; --accent:#FF2D6F; --mint:#16E0B0; --gold:#FFC24B;
+    --text:#F6F1FB; --muted:#B6A8C6; --faint:#7C7090;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; height:100%;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:#000; color:var(--text);
+    display:flex; align-items:center; justify-content:center; min-height:100%;
+  }
+  .phone{
+    position:relative; width:100%; max-width:420px; height:100vh; max-height:880px;
+    background:var(--bg); overflow:hidden; display:flex; flex-direction:column;
+    border-radius:36px; box-shadow:0 0 0 1px #1a1a1a;
+  }
+  @media (max-width:440px){ .phone{ height:100vh; max-height:none; border-radius:0; } }
+
+  .statusbar{ display:flex; justify-content:space-between; align-items:center;
+    padding:max(14px, env(safe-area-inset-top)) 22px 6px; font-size:13px; color:var(--muted); font-weight:600; flex:none;}
+  .switchrole{ color:var(--accent); cursor:pointer; }
+
+  .main{ flex:1; overflow-y:auto; }
+  .screen{ display:none; padding:8px 20px 28px; min-height:100%; }
+  .screen.active{ display:block; animation:fade .25s ease; }
+  @keyframes fade{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;} }
+
+  h1{ font-size:26px; font-weight:800; letter-spacing:-.6px; margin:16px 0 6px; }
+  h2{ font-size:18px; font-weight:700; margin:0 0 4px; }
+  .sub{ color:var(--muted); font-size:14px; line-height:1.5; margin:0 0 18px; }
+  .eyebrow{ color:var(--accent); font-size:12px; font-weight:700; letter-spacing:1.4px; text-transform:uppercase; }
+  .wordmark{ font-size:22px; font-weight:800; letter-spacing:-.5px; }
+  .wordmark .dot{ color:var(--accent); }
+
+  .btn{ width:100%; border:0; border-radius:16px; padding:16px; font-size:16px; font-weight:700;
+    background:var(--accent); color:#fff; cursor:pointer; transition:transform .08s; }
+  .btn:active{ transform:scale(.98); }
+  .btn:disabled{ opacity:.4; }
+  .btn.ghost{ background:transparent; color:var(--text); border:1px solid var(--line); }
+  .btn.mint{ background:var(--mint); color:#062a22; }
+  .btn-row{ display:flex; gap:12px; margin-top:14px; }
+
+  input[type=text]{ width:100%; padding:16px; border-radius:16px; border:1px solid var(--line);
+    background:var(--card); color:var(--text); font-size:18px; outline:none; }
+  input[type=text]:focus{ border-color:var(--accent); }
+
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:20px; padding:16px; margin-bottom:14px; }
+  .venue{ display:flex; align-items:center; gap:14px; }
+  .dotlive{ width:9px; height:9px; border-radius:50%; background:var(--mint); box-shadow:0 0 0 4px rgba(22,224,176,.18); }
+
+  .staff{ display:flex; align-items:center; gap:14px; padding:14px; background:var(--card);
+    border:1px solid var(--line); border-radius:18px; margin-bottom:12px; cursor:pointer; transition:border-color .15s; }
+  .staff:active{ border-color:var(--accent); }
+  .avatar{ width:52px; height:52px; border-radius:50%; flex:none; display:flex; align-items:center;
+    justify-content:center; font-weight:800; font-size:18px; color:#0b0710; }
+  .avatar.sm{ width:42px; height:42px; font-size:15px; }
+  .venuethumb{ width:52px; height:52px; border-radius:14px; flex:none; display:flex; align-items:center;
+    justify-content:center; font-weight:800; font-size:21px; color:#fff; background:var(--accent); }
+  .staff .meta{ flex:1; min-width:0; }
+  .staff .name{ font-weight:700; font-size:16px; }
+  .staff .role{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .from{ text-align:right; flex:none; }
+  .from .amt{ font-weight:800; font-size:17px; color:var(--gold); }
+  .from .lbl{ font-size:11px; color:var(--faint); }
+  .star{ color:var(--gold); }
+
+  .bigavatar{ width:96px; height:96px; border-radius:50%; margin:6px auto 14px; display:flex;
+    align-items:center; justify-content:center; font-weight:800; font-size:34px; color:#0b0710; }
+
+  .amount-display{ text-align:center; margin:18px 0 6px; }
+  .amount-display .num{ font-size:54px; font-weight:800; letter-spacing:-2px; }
+  .amount-display .num small{ font-size:28px; color:var(--muted); vertical-align:8px; }
+
+  input[type=range]{ -webkit-appearance:none; width:100%; height:8px; border-radius:8px; background:var(--line); outline:none; }
+  input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:30px; height:30px; border-radius:50%;
+    background:#fff; border:4px solid var(--accent); cursor:pointer; }
+  input[type=range]::-moz-range-thumb{ width:26px; height:26px; border-radius:50%; background:#fff; border:4px solid var(--accent); }
+
+  .row{ display:flex; justify-content:space-between; align-items:center; padding:13px 0; border-bottom:1px solid var(--line); }
+  .row:last-child{ border-bottom:0; }
+  .row .k{ color:var(--muted); font-size:14px; }
+  .row .v{ font-weight:700; font-size:14px; }
+
+  .colorblob{ width:84px; height:84px; border-radius:24px; margin:0 auto; }
+
+  .toggle{ width:54px; height:32px; border-radius:20px; background:var(--line); position:relative; cursor:pointer; transition:background .2s; flex:none;}
+  .toggle.on{ background:var(--mint); }
+  .toggle .knob{ position:absolute; top:3px; left:3px; width:26px; height:26px; border-radius:50%; background:#fff; transition:left .2s; }
+  .toggle.on .knob{ left:25px; }
+
+  .stars{ display:flex; gap:10px; justify-content:center; margin:8px 0 18px; }
+  .stars span{ font-size:38px; line-height:1; color:var(--line); cursor:pointer; transition:color .1s; }
+  .stars span.on{ color:var(--gold); }
+  .tipopts{ display:flex; gap:10px; }
+  .tipopt{ flex:1; text-align:center; padding:14px 0; border:1px solid var(--line); border-radius:14px;
+    font-weight:700; cursor:pointer; color:var(--muted); }
+  .tipopt.sel{ border-color:var(--mint); color:var(--mint); background:var(--card2); }
+  .heldbadge{ display:inline-block; font-size:11px; font-weight:800; padding:3px 9px; border-radius:10px;
+    background:var(--card2); color:var(--gold); border:1px solid var(--line); }
+  .areachips{ display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 4px; }
+  .area{ padding:9px 14px; border-radius:14px; border:1px solid var(--line); background:var(--card);
+    font-size:13px; font-weight:600; color:var(--muted); cursor:pointer; }
+  .area.sel{ border-color:var(--accent); color:#fff; background:var(--card2); }
+
+  .tally{ background:var(--card2); border:1px solid var(--line); border-radius:18px; padding:16px; margin-bottom:14px; }
+  .tally .big{ font-size:34px; font-weight:800; color:var(--mint); letter-spacing:-1px; }
+
+  .pretip{ display:flex; align-items:center; gap:12px; padding:13px; background:var(--card);
+    border:1px solid var(--line); border-radius:16px; margin-bottom:11px; }
+  .pretip.fresh{ border-color:var(--mint); }
+  .dotcolor{ width:16px; height:16px; border-radius:5px; flex:none; }
+  .nowtag{ font-size:10px; font-weight:800; color:#062a22; background:var(--mint); padding:2px 7px; border-radius:10px; }
+
+  .empty{ text-align:center; color:var(--faint); padding:40px 10px; }
+  .empty .ic{ font-size:34px; opacity:.5; }
+
+  .flash{ position:absolute; inset:0; z-index:60; display:none; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; }
+  .flash.active{ display:flex; animation:pulse 1.1s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{ filter:brightness(1);} 50%{ filter:brightness(.5);} }
+  .flashbrand{ font-size:48px; font-weight:800; letter-spacing:-1.5px; color:#0B0710; text-align:center; line-height:1; padding:0 18px; }
+  .flashtag{ margin-top:10px; font-size:14px; font-weight:700; color:rgba(11,7,16,.7); letter-spacing:.3px; }
+  .flash .lbl{ background:rgba(0,0,0,.6); color:#fff; padding:12px 20px; border-radius:16px; font-weight:700; margin-top:26px; }
+  .flash .tap{ position:absolute; bottom:46px; color:rgba(0,0,0,.65); font-weight:700; font-size:14px; }
+
+  .backbtn{ background:none; border:0; color:var(--muted); font-size:15px; font-weight:600; padding:6px 0; cursor:pointer; }
+  .footnote{ color:var(--faint); font-size:12px; text-align:center; margin-top:16px; line-height:1.5; }
+
+  .nav{ flex:none; display:none; border-top:1px solid var(--line); background:var(--surface); }
+  .nav.show{ display:flex; }
+  .navbtn{ flex:1; background:none; border:0; padding:10px 0 14px; color:var(--faint); cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; gap:4px; font-size:11px; font-weight:600; }
+  .navbtn.active{ color:var(--accent); }
+  .navbtn svg{ width:24px; height:24px; }
+
+  .header{ display:flex; align-items:center; justify-content:space-between; padding-top:4px; }
+  .ghostlink{ font-size:12px; color:var(--faint); cursor:pointer; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="statusbar"><span>11:48</span><span class="switchrole" id="switchrole" onclick="show('ob_role')">&#8644;&nbsp; switch role</span></div>
+
+  <div class="main">
+
+    <!-- ONBOARDING: SPLASH -->
+    <div class="screen active" id="ob_splash">
+      <div style="padding-top:60px;">
+        <div class="wordmark" style="font-size:40px;">Just the Tip<span class="dot">.</span></div>
+        <h1 style="margin-top:18px;">Skip the wait.<br>Tip up front.</h1>
+        <p class="sub">A direct line between you and the people who run the night. Their tips. Their regulars. The house stays out of it.</p>
+      </div>
+      <div style="margin-top:30px;">
+        <button class="btn" onclick="show('ob_role')">Get started</button>
+      </div>
+      <p class="footnote">Prototype &middot; demo data only. No real payments or accounts.</p>
+    </div>
+
+    <!-- ONBOARDING: ROLE -->
+    <div class="screen" id="ob_role">
+      <button class="backbtn" onclick="show('ob_splash')">&larr;</button>
+      <h1 style="margin-top:12px;">Which are you?</h1>
+      <p class="sub">You can switch anytime.</p>
+      <div class="card" style="cursor:pointer;" onclick="pickRole('patron')">
+        <h2>I&rsquo;m out tonight</h2>
+        <div class="sub" style="margin:4px 0 0;">Find staff, pre-tip, get noticed fast.</div>
+      </div>
+      <div class="card" style="cursor:pointer;" onclick="pickRole('bartender')">
+        <h2>I work the floor</h2>
+        <div class="sub" style="margin:4px 0 0;">Bartender, door, or bottle service. Set your number, keep your tips.</div>
+      </div>
+      <div class="card" style="cursor:pointer;" onclick="pickRole('club')">
+        <h2>I run the venue</h2>
+        <div class="sub" style="margin:4px 0 0;">See the pre-tips flowing across your floor &mdash; and earn a cut.</div>
+      </div>
+    </div>
+
+    <!-- ONBOARDING: NAME -->
+    <div class="screen" id="ob_name">
+      <button class="backbtn" onclick="show('ob_role')">&larr;</button>
+      <h1 style="margin-top:12px;">What&rsquo;s your name?</h1>
+      <p class="sub">That&rsquo;s the whole signup. You&rsquo;re seconds from the front of the line.</p>
+      <input type="text" id="nameInput" placeholder="First name" autocomplete="off" oninput="document.getElementById('nameNext').disabled=!this.value.trim()" />
+      <button class="btn" id="nameNext" style="margin-top:16px;" disabled onclick="finishOnboard()">I&rsquo;m in</button>
+    </div>
+
+    <!-- ============ PATRON ============ -->
+
+    <!-- PATRON: NEARBY (venues) -->
+    <div class="screen" id="pat_nearby">
+      <div class="header"><div class="wordmark">Nearby</div></div>
+      <p class="sub" style="margin-top:14px;">Spots near you with staff taking pre-tips right now. Tap a club to see who&rsquo;s on.</p>
+      <div id="venuelist"></div>
+    </div>
+
+    <!-- PATRON: VENUE STAFF -->
+    <div class="screen" id="pat_staff">
+      <button class="backbtn" onclick="goTab('pat_nearby')">&larr; Nearby</button>
+      <div class="header" style="margin-top:8px;"><div class="wordmark" id="venueName">Lotus</div><span class="dotlive"></span></div>
+      <p class="sub" id="venueMeta" style="margin-top:8px;"></p>
+      <div id="stafflist"></div>
+    </div>
+
+    <!-- PATRON: REGULARS -->
+    <div class="screen" id="pat_regulars">
+      <div class="header"><div class="wordmark">My people</div></div>
+      <p class="sub" style="margin-top:14px;">Staff you&rsquo;ve pre-tipped. They know you now &mdash; expect the good treatment when you&rsquo;re back.</p>
+      <div id="myRegulars"></div>
+    </div>
+
+    <!-- PATRON: PROFILE -->
+    <div class="screen" id="pat_you">
+      <div class="header"><div class="wordmark">You</div></div>
+      <div class="card venue" style="margin-top:14px;">
+        <div class="avatar" id="pat_av" style="background:var(--accent); color:#fff;"></div>
+        <div style="flex:1;"><h2 id="pat_name"></h2><div class="sub" style="margin:2px 0 0;">Patron &middot; member since tonight</div></div>
+      </div>
+      <div class="card">
+        <div class="row"><span class="k">Pre-tips sent</span><span class="v" id="pat_count">0</span></div>
+        <div class="row"><span class="k">People in your circle</span><span class="v" id="pat_circle">0</span></div>
+        <div class="row"><span class="k">Payment</span><span class="v" style="color:var(--faint);">added later</span></div>
+      </div>
+      <button class="btn ghost" onclick="resetApp()">Switch role / start over</button>
+      <p class="footnote">Real app: this is where your card lives. Pre-tips charge instantly and go 100% to the staffer.</p>
+    </div>
+
+    <!-- PATRON: DETAIL -->
+    <div class="screen" id="pat_detail">
+      <button class="backbtn" onclick="goTab('pat_nearby')">&larr; Back</button>
+      <div class="bigavatar" id="d_avatar"></div>
+      <h2 style="text-align:center;" id="d_name"></h2>
+      <p class="sub" style="text-align:center;" id="d_role"></p>
+      <div class="card">
+        <div class="row"><span class="k">Their minimum</span><span class="v" id="d_min"></span></div>
+        <div class="row"><span class="k">Where they are</span><span class="v" id="d_area"></span></div>
+        <div class="row"><span class="k">You&rsquo;ll flash</span><span class="v" id="d_color"></span></div>
+      </div>
+      <span class="eyebrow">Your pre-tip</span>
+      <div class="amount-display"><div class="num">$<span id="amtval">200</span></div></div>
+      <input type="range" id="amt" min="40" max="500" step="20" value="200" />
+      <button class="btn mint" style="margin-top:20px;" onclick="sendTip()">Send pre-tip &middot; $<span id="btnamt">200</span></button>
+      <p class="footnote">Real app: charges your card; 100% goes to <span id="d_name2"></span>. House gets $0.</p>
+    </div>
+
+    <!-- PATRON: REVEAL -->
+    <div class="screen" id="pat_reveal">
+      <span class="eyebrow">You&rsquo;re on the list</span>
+      <h1 style="margin-top:8px;">You&rsquo;re set.</h1>
+      <p class="sub" id="r_sub"></p>
+      <div class="card" style="text-align:center;">
+        <div class="bigavatar" id="r_avatar" style="margin-bottom:10px;"></div>
+        <h2 id="r_name"></h2>
+        <p class="sub" id="r_area" style="margin-bottom:18px;"></p>
+        <div class="colorblob" id="r_blob"></div>
+        <p class="sub" style="margin:12px 0 0;">Flash this color on your screen.<br>They&rsquo;re watching for it.</p>
+      </div>
+      <button class="btn" onclick="openFlash()">Flash my color</button>
+      <div class="btn-row"><button class="btn mint" onclick="openWrap()">We connected &mdash; rate &amp; release</button></div>
+      <div style="text-align:center; margin-top:10px;"><span class="ghostlink" onclick="goTab('pat_regulars')">Still waiting &middot; skip for now</span></div>
+      <p class="footnote">$<span id="r_held"></span> is held in escrow &mdash; it releases to <span id="r_name2"></span> only after you connect. Tip more if they earn it.</p>
+    </div>
+
+    <!-- PATRON: WRAP / RATE -->
+    <div class="screen" id="pat_wrap">
+      <span class="eyebrow">Service complete</span>
+      <h1 style="margin-top:8px;" id="w_head">How was it?</h1>
+      <p class="sub">Your pre-tip releases now. Add a little extra if they earned it.</p>
+      <div class="card" style="text-align:center;">
+        <div class="bigavatar" id="w_avatar" style="margin-bottom:10px;"></div>
+        <h2 id="w_name"></h2>
+        <div class="stars" id="w_stars">
+          <span data-v="1">&#9733;</span><span data-v="2">&#9733;</span><span data-v="3">&#9733;</span><span data-v="4">&#9733;</span><span data-v="5">&#9733;</span>
+        </div>
+        <span class="eyebrow">Add a tip?</span>
+        <div class="tipopts" style="margin:12px 0 2px;">
+          <div class="tipopt sel" data-t="0">None</div><div class="tipopt" data-t="20">$20</div><div class="tipopt" data-t="40">$40</div><div class="tipopt" data-t="60">$60</div>
+        </div>
+      </div>
+      <button class="btn mint" onclick="submitWrap()">Done &middot; release $<span id="w_total">0</span></button>
+      <p class="footnote">Real app: the pre-tip was authorized up front, captured only now that you&rsquo;ve confirmed contact. Your rating builds <span id="w_name2"></span>&rsquo;s reputation.</p>
+    </div>
+
+    <!-- ============ BARTENDER ============ -->
+
+    <!-- BARTENDER: TONIGHT -->
+    <div class="screen" id="bar_tonight">
+      <div class="header"><div class="wordmark">Tonight</div><span id="liveState" class="ghostlink"></span></div>
+      <div class="card venue" style="margin-top:14px;">
+        <div class="avatar" id="bar_av" style="background:var(--accent); color:#fff;"></div>
+        <div style="flex:1;"><h2 id="bar_name"></h2><div class="sub" style="margin:2px 0 0;">at Lotus &middot; Meatpacking</div></div>
+        <div class="toggle on" id="b_toggle" onclick="toggleLive()"><div class="knob"></div></div>
+      </div>
+
+      <span class="eyebrow">My number</span>
+      <div class="amount-display" style="margin:12px 0 6px;"><div class="num">$<span id="b_dialval">200</span><small>+</small></div></div>
+      <input type="range" id="b_dial" min="40" max="500" step="20" value="200" />
+      <p class="sub" style="text-align:center; margin-top:8px;">Dial up what gets someone your special attention.</p>
+
+      <span class="eyebrow">Where you are</span>
+      <div class="areachips" id="b_areas">
+        <div class="area sel">Main bar</div><div class="area">VIP</div><div class="area">Bottle service</div><div class="area">The door</div>
+      </div>
+
+      <span class="eyebrow" style="display:block; margin-top:18px;">Coming in</span>
+      <div id="incoming" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- BARTENDER: REGULARS -->
+    <div class="screen" id="bar_regulars">
+      <div class="header"><div class="wordmark">Regulars</div></div>
+      <p class="sub" style="margin-top:14px;">The people who keep coming back to you &mdash; and keep paying up front.</p>
+      <div id="barRegulars"></div>
+    </div>
+
+    <!-- BARTENDER: EARNINGS -->
+    <div class="screen" id="bar_earn">
+      <div class="header"><div class="wordmark">Earnings</div></div>
+      <div class="tally" style="margin-top:14px;">
+        <div class="sub" style="margin:0 0 4px;">Kept by you tonight</div>
+        <div class="big" id="earnTotal">$640</div>
+        <div class="sub" style="margin:4px 0 0;" id="earnSub">across 4 pre-tips &middot; $0 to the house</div>
+      </div>
+      <div class="card">
+        <div class="row"><span class="k">This week</span><span class="v">$2,180</span></div>
+        <div class="row"><span class="k">Your regulars</span><span class="v" id="earnRegCount">3</span></div>
+        <div class="row"><span class="k">Taken by the house</span><span class="v" style="color:var(--mint);">$0</span></div>
+      </div>
+      <button class="btn ghost" onclick="resetApp()">Switch role / start over</button>
+      <p class="footnote">Later: the club can hand you promos to pass to your regulars &mdash; a cut of the upside, still your relationship.</p>
+    </div>
+
+    <!-- ============ CLUB / HOUSE ============ -->
+
+    <!-- CLUB: HOUSE DASHBOARD -->
+    <div class="screen" id="club_house">
+      <div class="header"><div class="wordmark">House</div><span id="club_state" class="ghostlink"></span></div>
+      <div class="card venue" style="margin-top:14px;">
+        <div class="venuethumb">L</div>
+        <div style="flex:1;"><h2>Lotus</h2><div class="sub" style="margin:2px 0 0;">Meatpacking &middot; tonight</div></div>
+        <div class="toggle on" id="club_toggle" onclick="toggleClub()"><div class="knob"></div></div>
+      </div>
+      <div class="tally" style="margin-top:14px;">
+        <div class="sub" style="margin:0 0 4px;">Pre-tips flowing across your floor tonight</div>
+        <div class="big" id="club_total" style="color:var(--gold);">$0</div>
+        <div class="sub" style="margin:4px 0 0;" id="club_count">across 0 staff</div>
+      </div>
+      <div class="card">
+        <div class="row"><span class="k">Your cut (10%)</span><span class="v" id="club_cut" style="color:var(--mint);">$0</span></div>
+        <div class="row"><span class="k">Kept by your staff</span><span class="v" id="club_keep">$0</span></div>
+        <div class="row"><span class="k">Staff on the program</span><span class="v" id="club_staffn">0</span></div>
+      </div>
+      <p class="sub" id="club_msg" style="margin-top:4px;"></p>
+    </div>
+
+    <!-- CLUB: STAFF -->
+    <div class="screen" id="club_staff">
+      <div class="header"><div class="wordmark">Your staff</div></div>
+      <p class="sub" style="margin-top:14px;">Who&rsquo;s taking pre-tips tonight, and what each is bringing across your floor.</p>
+      <div id="clubStaffList"></div>
+    </div>
+
+    <!-- CLUB: PERKS -->
+    <div class="screen" id="club_perks">
+      <div class="header"><div class="wordmark">House perks</div></div>
+      <p class="sub" style="margin-top:14px;">What your cut buys your guests. This is why staff and patrons accept the 10% &mdash; turn on what only the house can give.</p>
+      <div id="perkList"></div>
+      <p class="footnote">Your cut should buy something only you can offer &mdash; priority entry, a comped table, a promo. That&rsquo;s the line between a partner and a tax.</p>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="nav" id="nav"></div>
+
+  <!-- FLASH OVERLAY -->
+  <div class="flash" id="flash" onclick="closeFlash()">
+    <div class="flashbrand">Just the Tip.</div>
+    <div class="flashtag">skip the wait &middot; tip up front</div>
+    <div class="lbl" id="flashlbl"></div>
+    <div class="tap">tap anywhere to stop</div>
+  </div>
+</div>
+
+<script>
+  const COLORS = { pink:'#FF2D6F', mint:'#16E0B0', gold:'#FFC24B', violet:'#9B5CFF', cyan:'#23C9FF', lime:'#9BE015' };
+  const VENUES = [
+    { id:'lotus',   name:'Lotus',         hood:'Meatpacking', dist:'0.2 mi' },
+    { id:'marquee', name:'Marquee',       hood:'Chelsea',     dist:'0.6 mi' },
+    { id:'pent',    name:'The Penthouse', hood:'Midtown',     dist:'1.1 mi' }
+  ];
+  const STAFF = [
+    { id:'marcus', venue:'lotus',   name:'Marcus', role:'Bartender', area:'Main bar, left side', min:200, color:'pink',   photo:'https://i.pravatar.cc/160?img=12' },
+    { id:'nia',    venue:'lotus',   name:'Nia',    role:'Bartender', area:'Back bar', min:160, color:'lime',  photo:'https://i.pravatar.cc/160?img=45' },
+    { id:'theo',   venue:'lotus',   name:'Theo',   role:'Doorman', area:'Front entrance', min:120, color:'cyan',  photo:'https://i.pravatar.cc/160?img=51' },
+    { id:'jas',    venue:'marquee', name:'Jasmine', role:'Bottle service', area:'VIP banquettes', min:300, color:'violet', photo:'https://i.pravatar.cc/160?img=47' },
+    { id:'leo',    venue:'marquee', name:'Leo',    role:'Bartender', area:'Center bar', min:180, color:'gold',  photo:'https://i.pravatar.cc/160?img=13' },
+    { id:'maya',   venue:'marquee', name:'Maya',   role:'Doorman', area:'VIP line', min:100, color:'mint',  photo:'https://i.pravatar.cc/160?img=31' },
+    { id:'sofia',  venue:'pent',    name:'Sofia',  role:'Bottle service', area:'Rooftop tables', min:350, color:'pink',  photo:'https://i.pravatar.cc/160?img=20' },
+    { id:'ray',    venue:'pent',    name:'Ray',    role:'Bartender', area:'Sky bar', min:220, color:'cyan',  photo:'https://i.pravatar.cc/160?img=59' }
+  ];
+  const PATRON_PHOTOS = ['https://i.pravatar.cc/160?img=33','https://i.pravatar.cc/160?img=15','https://i.pravatar.cc/160?img=60','https://i.pravatar.cc/160?img=5'];
+  function avTag(cls, photo, color, name){
+    const border = 'border:3px solid '+(color||'var(--line)')+';';
+    if(photo) return `<div class="${cls}" style="background:url('${photo}') center/cover;${border}"></div>`;
+    return `<div class="${cls}" style="background:${color||'var(--accent)'};${border}">${initials(name)}</div>`;
+  }
+  function paintAvatar(el, photo, color, name){
+    el.textContent=''; el.style.border='3px solid '+(color||'var(--line)');
+    if(photo){ el.style.background = `url('${photo}') center/cover`; }
+    else { el.style.background = color||'var(--accent)'; el.textContent = initials(name); }
+  }
+  const ICONS = {
+    pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>',
+    star:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9Z"/></svg>',
+    user:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>',
+    bolt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 4 14h7l-1 8 9-12h-7Z"/></svg>',
+    cash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>',
+    house:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/></svg>'
+  };
+  const PAT_TABS = [['pat_nearby','Nearby','pin'],['pat_regulars','My people','star'],['pat_you','You','user']];
+  const BAR_TABS = [['bar_tonight','Tonight','bolt'],['bar_regulars','Regulars','star'],['bar_earn','Earnings','cash']];
+  const CLUB_TABS = [['club_house','House','house'],['club_staff','Staff','user'],['club_perks','Perks','star']];
+
+  let S = load();
+  function load(){ try{ return JSON.parse(localStorage.getItem('jtt')) || blank(); }catch(e){ return blank(); } }
+  function blank(){ return { role:null, name:'', dial:200, live:true, sent:[], regulars:[], clubOn:true, perks:{ entry:true, table:false, promos:false } }; }
+  function save(){ try{ localStorage.setItem('jtt', JSON.stringify(S)); }catch(e){} }
+
+  function initials(n){ return (n||'?').trim().slice(0,1).toUpperCase(); }
+  function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+  function staffById(id){ return STAFF.find(s=>s.id===id); }
+
+  let current = null;
+
+  function show(id){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    const el = document.getElementById(id); el.classList.add('active');
+    document.querySelector('.main').scrollTop = 0;
+    document.getElementById('switchrole').style.visibility = id.startsWith('ob_') ? 'hidden' : 'visible';
+    const tabs = id.startsWith('pat_') ? PAT_TABS : id.startsWith('bar_') ? BAR_TABS : id.startsWith('club_') ? CLUB_TABS : null;
+    const isTab = tabs && tabs.some(t=>t[0]===id);
+    renderNav(tabs, id, isTab);
+  }
+  function renderNav(tabs, active, showIt){
+    const nav = document.getElementById('nav');
+    if(!tabs || !showIt){ nav.classList.remove('show'); nav.innerHTML=''; return; }
+    nav.classList.add('show');
+    nav.innerHTML = tabs.map(([id,label,ic])=>
+      `<button class="navbtn ${id===active?'active':''}" onclick="goTab('${id}')">${ICONS[ic]}<span>${label}</span></button>`
+    ).join('');
+  }
+  function goTab(id){
+    if(id==='pat_nearby') renderVenues();
+    if(id==='pat_regulars') renderMyRegulars();
+    if(id==='pat_you') renderPatYou();
+    if(id==='bar_tonight') renderIncoming();
+    if(id==='bar_regulars') renderBarRegulars();
+    if(id==='bar_earn') renderEarn();
+    if(id==='club_house') renderClubHouse();
+    if(id==='club_staff') renderClubStaff();
+    if(id==='club_perks') renderClubPerks();
+    show(id);
+  }
+
+  // ---- onboarding ----
+  function pickRole(r){ S.role=r; if(S.name){ save(); enterApp(); } else { show('ob_name'); } }
+  function finishOnboard(){
+    S.name = document.getElementById('nameInput').value.trim();
+    if(!S.photo) S.photo = PATRON_PHOTOS[Math.floor(Math.random()*PATRON_PHOTOS.length)];
+    save();
+    enterApp();
+  }
+  function enterApp(){
+    if(S.role==='patron'){ goTab('pat_nearby'); }
+    else if(S.role==='bartender'){ renderBarHome(); goTab('bar_tonight'); }
+    else { goTab('club_house'); }
+  }
+  function resetApp(){ S = blank(); save(); show('ob_splash'); }
+
+  // ---- patron ----
+  let currentVenue = null;
+  function renderVenues(){
+    const c = document.getElementById('venuelist'); c.innerHTML='';
+    VENUES.forEach(v=>{
+      const staff = STAFF.filter(s=>s.venue===v.id);
+      const minFrom = Math.min.apply(null, staff.map(s=>s.min));
+      const el = document.createElement('div'); el.className='staff'; el.onclick=()=>openVenue(v.id);
+      el.innerHTML = `
+        <div class="venuethumb">${v.name.slice(0,1)}</div>
+        <div class="meta"><div class="name">${v.name}</div>
+          <div class="role">${v.hood} · ${v.dist} · from $${minFrom}</div></div>
+        <div class="from"><div class="amt" style="color:var(--mint)">${staff.length}</div><div class="lbl">here now</div></div>`;
+      c.appendChild(el);
+    });
+  }
+  function openVenue(vid){
+    currentVenue = vid;
+    const v = VENUES.find(x=>x.id===vid);
+    const n = STAFF.filter(s=>s.venue===vid).length;
+    document.getElementById('venueName').textContent = v.name;
+    document.getElementById('venueMeta').textContent = `${v.hood} · ${v.dist} · ${n} taking pre-tips now`;
+    renderStaff(vid);
+    show('pat_staff');
+  }
+  function renderStaff(vid){
+    const list = document.getElementById('stafflist'); list.innerHTML='';
+    STAFF.filter(s=>!vid || s.venue===vid).forEach(s=>{
+      const isReg = S.regulars.includes(s.id);
+      const el = document.createElement('div'); el.className='staff'; el.onclick=()=>openDetail(s);
+      el.innerHTML = `
+        ${avTag('avatar', s.photo, COLORS[s.color], s.name)}
+        <div class="meta"><div class="name">${s.name} ${isReg?'<span class="star">&#9733;</span>':''}</div>
+          <div class="role">${s.role} &middot; ${s.area.split(',')[0]}</div></div>
+        <div class="from"><div class="amt">$${s.min}</div><div class="lbl">from</div></div>`;
+      list.appendChild(el);
+    });
+  }
+  function renderMyRegulars(){
+    const c = document.getElementById('myRegulars');
+    if(!S.regulars.length){ c.innerHTML = `<div class="empty"><div class="ic">&#9733;</div><p>No one yet.<br>Send a pre-tip and they&rsquo;ll show up here.</p></div>`; return; }
+    c.innerHTML = S.regulars.map(id=>{ const s=staffById(id);
+      const sent = S.sent.filter(x=>x.staffId===id);
+      const total = sent.reduce((a,b)=>a+b.amount+(b.tip||0),0);
+      return `<div class="staff" onclick="openDetail(staffById('${id}'))">
+        ${avTag('avatar', s.photo, COLORS[s.color], s.name)}
+        <div class="meta"><div class="name">${s.name} <span class="star">&#9733;</span></div>
+          <div class="role">${s.role} &middot; ${sent.length} pre-tip${sent.length>1?'s':''}</div></div>
+        <div class="from"><div class="amt">$${total}</div><div class="lbl">total</div></div></div>`;
+    }).join('');
+  }
+  function renderPatYou(){
+    document.getElementById('pat_name').textContent = S.name || 'You';
+    paintAvatar(document.getElementById('pat_av'), S.photo, COLORS.pink, S.name);
+    document.getElementById('pat_count').textContent = S.sent.length;
+    document.getElementById('pat_circle').textContent = S.regulars.length;
+  }
+
+  function openDetail(s){
+    current = s;
+    paintAvatar(document.getElementById('d_avatar'), s.photo, COLORS[s.color], s.name);
+    document.getElementById('d_name').textContent = s.name;
+    document.getElementById('d_name2').textContent = s.name;
+    document.getElementById('d_role').textContent = s.role;
+    document.getElementById('d_min').textContent = '$'+s.min;
+    document.getElementById('d_area').textContent = s.area;
+    document.getElementById('d_color').textContent = cap(s.color);
+    const amt = document.getElementById('amt'); amt.min=s.min; amt.value=s.min; updateAmt();
+    show('pat_detail');
+  }
+  const amt = document.getElementById('amt');
+  function updateAmt(){
+    const v=+amt.value;
+    document.getElementById('amtval').textContent=v;
+    document.getElementById('btnamt').textContent=v;
+    const pct=(v-amt.min)/(amt.max-amt.min)*100;
+    amt.style.background=`linear-gradient(90deg,var(--accent) ${pct}%, var(--line) ${pct}%)`;
+  }
+  amt.addEventListener('input', updateAmt);
+
+  function sendTip(){
+    const s=current, v=+document.getElementById('amtval').textContent;
+    S.sent.unshift({ staffId:s.id, name:S.name, amount:v, color:s.color, area:s.area, ts:Date.now(), status:'held', rating:0, tip:0 });
+    if(!S.regulars.includes(s.id)) S.regulars.push(s.id);
+    save();
+    document.getElementById('r_sub').textContent = `$${v} is locked in for ${s.name}. Flash your color and connect.`;
+    document.getElementById('r_held').textContent = v;
+    paintAvatar(document.getElementById('r_avatar'), s.photo, COLORS[s.color], s.name);
+    document.getElementById('r_name').textContent = s.name;
+    document.getElementById('r_name2').textContent = s.name;
+    document.getElementById('r_area').textContent = s.area;
+    document.getElementById('r_blob').style.background = COLORS[s.color];
+    show('pat_reveal');
+  }
+  function openFlash(){
+    const s=current, f=document.getElementById('flash');
+    f.style.background = COLORS[s.color];
+    document.getElementById('flashlbl').innerHTML = `${s.name} &middot; ${s.area}`;
+    f.classList.add('active');
+  }
+  function closeFlash(){ document.getElementById('flash').classList.remove('active'); }
+
+  // ---- wrap up: release + rate + extra tip ----
+  let wrapItem=null, wrapRating=0, wrapTip=0;
+  function openWrap(){
+    const s=current;
+    wrapItem = S.sent.find(x=>x.staffId===s.id && x.status==='held') || S.sent[0];
+    wrapRating=0; wrapTip=0;
+    paintAvatar(document.getElementById('w_avatar'), s.photo, COLORS[s.color], s.name);
+    document.getElementById('w_name').textContent = s.name;
+    document.getElementById('w_name2').textContent = s.name;
+    document.getElementById('w_head').textContent = 'How was '+s.name+'?';
+    document.querySelectorAll('#w_stars span').forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('#pat_wrap .tipopt').forEach((t,i)=>t.classList.toggle('sel', i===0));
+    updateWrapTotal();
+    show('pat_wrap');
+  }
+  function updateWrapTotal(){ document.getElementById('w_total').textContent = (wrapItem?wrapItem.amount:0)+wrapTip; }
+  document.querySelectorAll('#w_stars span').forEach(s=>{
+    s.onclick=()=>{ wrapRating=+s.dataset.v; document.querySelectorAll('#w_stars span').forEach(x=>x.classList.toggle('on', +x.dataset.v<=wrapRating)); };
+  });
+  document.querySelectorAll('#pat_wrap .tipopt').forEach(t=>{
+    t.onclick=()=>{ document.querySelectorAll('#pat_wrap .tipopt').forEach(x=>x.classList.remove('sel')); t.classList.add('sel'); wrapTip=+t.dataset.t; updateWrapTotal(); };
+  });
+  function submitWrap(){
+    if(wrapItem){ wrapItem.status='released'; wrapItem.rating=wrapRating; wrapItem.tip=wrapTip; }
+    if(current && !S.regulars.includes(current.id)) S.regulars.push(current.id);
+    save();
+    goTab('pat_regulars');
+  }
+
+  // ---- bartender ----
+  function renderBarHome(){
+    document.getElementById('bar_name').textContent = S.name || 'You';
+    paintAvatar(document.getElementById('bar_av'), S.photo, COLORS.pink, S.name);
+    const dial=document.getElementById('b_dial'); dial.value=S.dial; updateDial();
+    document.getElementById('b_toggle').classList.toggle('on', S.live);
+    document.getElementById('liveState').textContent = S.live ? 'live now' : 'paused';
+    renderIncoming();
+  }
+  const dial=document.getElementById('b_dial');
+  function updateDial(){
+    const v=+dial.value; S.dial=v; save();
+    document.getElementById('b_dialval').textContent=v;
+    const pct=(v-dial.min)/(dial.max-dial.min)*100;
+    dial.style.background=`linear-gradient(90deg,var(--accent) ${pct}%, var(--line) ${pct}%)`;
+  }
+  dial.addEventListener('input', updateDial);
+  function toggleLive(){ S.live=!S.live; save();
+    document.getElementById('b_toggle').classList.toggle('on', S.live);
+    document.getElementById('liveState').textContent = S.live ? 'live now' : 'paused'; }
+  document.querySelectorAll('#b_areas .area').forEach(a=>{
+    a.onclick=()=>{ document.querySelectorAll('#b_areas .area').forEach(x=>x.classList.remove('sel')); a.classList.add('sel'); };
+  });
+
+  const DEMO_IN = [
+    { name:'Alex', amount:200, color:'pink', reg:true, area:'main bar', photo:'https://i.pravatar.cc/120?img=8',  status:'released', rating:5, tip:40 },
+    { name:'Priya', amount:160, color:'mint', reg:false, area:'main bar', photo:'https://i.pravatar.cc/120?img=49', status:'held', rating:0, tip:0 },
+    { name:'Dev', amount:120, color:'gold', reg:true, area:'main bar', photo:'https://i.pravatar.cc/120?img=11', status:'released', rating:4, tip:0 }
+  ];
+  function pretipRow(x, fresh){
+    const extra = x.tip ? ` +$${x.tip}` : '';
+    const tag = x.status==='released'
+      ? `<span class="nowtag" style="background:var(--gold);color:#3a2a00;">released</span>`
+      : (fresh ? `<span class="nowtag">just now</span>` : `<span class="heldbadge">holding</span>`);
+    const line2 = x.status==='released'
+      ? `${x.rating?('&#9733;'.repeat(x.rating)+' &middot; '):''}connected${extra?(' &middot; tipped '+extra.trim()):''}`
+      : `flashing ${x.color} &middot; held until you connect`;
+    return `<div class="pretip${fresh?' fresh':''}">${avTag('avatar sm', x.photo, COLORS[x.color], x.name)}
+      <div style="flex:1;"><div style="font-weight:700;">${x.name||'You'} &middot; $${x.amount}${extra} ${tag}</div>
+      <div class="sub" style="margin:0;">${line2}</div></div>
+      <div class="dotcolor" style="background:${COLORS[x.color]}"></div></div>`;
+  }
+  function renderIncoming(){
+    const c=document.getElementById('incoming');
+    const mine = S.sent.filter(x=>x.staffId==='marcus').map(x=>{
+      const ph = Object.assign({}, x, { photo:S.photo });
+      return pretipRow(ph, x.status!=='released');
+    });
+    const demo = DEMO_IN.map(d=>pretipRow(d, false));
+    c.innerHTML = mine.concat(demo).join('');
+  }
+  function renderBarRegulars(){
+    const regs=[{n:'Alex',v:1240,c:'pink',p:'https://i.pravatar.cc/120?img=8'},{n:'Dev',v:880,c:'gold',p:'https://i.pravatar.cc/120?img=11'},{n:'Sam',v:600,c:'cyan',p:'https://i.pravatar.cc/120?img=14'}];
+    document.getElementById('barRegulars').innerHTML = regs.map(r=>(
+      `<div class="staff">${avTag('avatar', r.p, COLORS[r.c], r.n)}
+        <div class="meta"><div class="name">${r.n} <span class="star">&#9733;</span></div>
+        <div class="role">regular &middot; flashes ${r.c}</div></div>
+        <div class="from"><div class="amt">$${r.v}</div><div class="lbl">lifetime</div></div></div>`)).join('');
+  }
+  function renderEarn(){
+    const mine = S.sent.filter(x=>x.staffId==='marcus');
+    const releasedDemo = DEMO_IN.filter(d=>d.status==='released').reduce((a,b)=>a+b.amount+b.tip,0);
+    const heldDemo = DEMO_IN.filter(d=>d.status!=='released').reduce((a,b)=>a+b.amount,0);
+    const mineReleased = mine.filter(x=>x.status==='released').reduce((a,b)=>a+b.amount+b.tip,0);
+    const mineHeld = mine.filter(x=>x.status!=='released').reduce((a,b)=>a+b.amount,0);
+    const total = releasedDemo + mineReleased;
+    const held = heldDemo + mineHeld;
+    const count = DEMO_IN.filter(d=>d.status==='released').length + mine.filter(x=>x.status==='released').length;
+    document.getElementById('earnTotal').textContent = '$'+total;
+    document.getElementById('earnSub').textContent = `${count} released &middot; $${held} held in escrow &middot; $0 to the house`;
+  }
+
+  // ---- club / house mode ----
+  const OWNER_VENUE = 'lotus';
+  const CLUB_BASE_VOL = { marcus:640, nia:420, theo:300 };
+  const PERKS = [
+    { id:'entry',  name:'Priority entry for pre-tippers', desc:'Skip the line when you pre-tip $150+' },
+    { id:'table',  name:'Comped table at $500+', desc:'Your biggest spenders get a table on the house' },
+    { id:'promos', name:'Push promos to regulars', desc:'Hand your bartenders offers to pass to their regulars' }
+  ];
+  function clubOn(){ return S.clubOn!==false; }
+  function clubData(){
+    const staff = STAFF.filter(s=>s.venue===OWNER_VENUE);
+    const per = staff.map(s=>{
+      const mine = S.sent.filter(x=>x.staffId===s.id).reduce((a,b)=>a+b.amount+(b.tip||0),0);
+      return { s, vol:(CLUB_BASE_VOL[s.id]||0)+mine };
+    });
+    return { per, total: per.reduce((a,b)=>a+b.vol,0) };
+  }
+  function renderClubHouse(){
+    const { per, total } = clubData();
+    const on = clubOn();
+    const cut = on ? Math.round(total*0.10) : 0;
+    document.getElementById('club_toggle').classList.toggle('on', on);
+    document.getElementById('club_state').textContent = on ? 'house mode on' : 'underground';
+    document.getElementById('club_total').textContent = '$'+total;
+    document.getElementById('club_count').textContent = `across ${per.length} staff on your floor`;
+    document.getElementById('club_cut').textContent = '$'+cut;
+    document.getElementById('club_keep').textContent = '$'+(total-cut);
+    document.getElementById('club_staffn').textContent = per.length;
+    document.getElementById('club_msg').textContent = on
+      ? `Your highest-spend guests are tipping up front. You earn $${cut} tonight, your staff keep the rest — and bartenders who keep more money stay longer.`
+      : `Underground: your staff are already doing this and you see $0. Flip House mode on to earn a cut and offer perks they can't get anywhere else.`;
+  }
+  function toggleClub(){ S.clubOn = !clubOn(); save(); renderClubHouse(); }
+  function renderClubStaff(){
+    const { per } = clubData(); const on = clubOn();
+    document.getElementById('clubStaffList').innerHTML = per.map(({s,vol})=>{
+      const cut = on ? Math.round(vol*0.10) : 0;
+      return `<div class="staff">${avTag('avatar', s.photo, COLORS[s.color], s.name)}
+        <div class="meta"><div class="name">${s.name}</div><div class="role">${s.role} &middot; your cut $${cut}</div></div>
+        <div class="from"><div class="amt" style="color:var(--gold)">$${vol}</div><div class="lbl">tonight</div></div></div>`;
+    }).join('');
+  }
+  function renderClubPerks(){
+    if(!S.perks){ S.perks = { entry:true, table:false, promos:false }; save(); }
+    const on = clubOn(); const p = S.perks;
+    document.getElementById('perkList').innerHTML = PERKS.map(pk=>{
+      const active = !!p[pk.id];
+      return `<div class="card" style="display:flex;align-items:center;justify-content:space-between;${on?'':'opacity:.45;'}">
+        <div style="flex:1;padding-right:12px;"><h2 style="font-size:16px;">${pk.name}</h2><div class="sub" style="margin:0;">${pk.desc}</div></div>
+        <div class="toggle ${active?'on':''}" onclick="${on?`togglePerk('${pk.id}')`:''}"><div class="knob"></div></div></div>`;
+    }).join('');
+  }
+  function togglePerk(id){ S.perks = S.perks||{}; S.perks[id] = !S.perks[id]; save(); renderClubPerks(); }
+
+  // ---- boot ----
+  if(S.role){ enterApp(); } else { show('ob_splash'); }
+</script>
+</body>
+</html>
