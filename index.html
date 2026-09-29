@@ -405,16 +405,15 @@
     { id:'pent',    name:'The Penthouse', hood:'Midtown',     dist:'1.1 mi' }
   ];
   const STAFF = [
-    { id:'marcus', venue:'lotus',   name:'Marcus', role:'Bartender', area:'Main bar, left side', min:200, color:'pink',   photo:'https://i.pravatar.cc/160?img=12' },
-    { id:'nia',    venue:'lotus',   name:'Nia',    role:'Bartender', area:'Back bar', min:160, color:'lime',  photo:'https://i.pravatar.cc/160?img=45' },
-    { id:'theo',   venue:'lotus',   name:'Theo',   role:'Doorman', area:'Front entrance', min:120, color:'cyan',  photo:'https://i.pravatar.cc/160?img=51' },
-    { id:'jas',    venue:'marquee', name:'Jasmine', role:'Bottle service', area:'VIP banquettes', min:300, color:'violet', photo:'https://i.pravatar.cc/160?img=47' },
-    { id:'leo',    venue:'marquee', name:'Leo',    role:'Bartender', area:'Center bar', min:180, color:'gold',  photo:'https://i.pravatar.cc/160?img=13' },
-    { id:'maya',   venue:'marquee', name:'Maya',   role:'Doorman', area:'VIP line', min:100, color:'mint',  photo:'https://i.pravatar.cc/160?img=31' },
-    { id:'sofia',  venue:'pent',    name:'Sofia',  role:'Bottle service', area:'Rooftop tables', min:350, color:'pink',  photo:'https://i.pravatar.cc/160?img=20' },
-    { id:'ray',    venue:'pent',    name:'Ray',    role:'Bartender', area:'Sky bar', min:220, color:'cyan',  photo:'https://i.pravatar.cc/160?img=59' }
+    { id:'marcus', venue:'lotus',   name:'Marcus', role:'Bartender', area:'Main bar, left side', min:200, color:'pink' },
+    { id:'nia',    venue:'lotus',   name:'Nia',    role:'Bartender', area:'Back bar', min:160, color:'lime' },
+    { id:'theo',   venue:'lotus',   name:'Theo',   role:'Doorman', area:'Front entrance', min:120, color:'cyan' },
+    { id:'jas',    venue:'marquee', name:'Jasmine', role:'Bottle service', area:'VIP banquettes', min:300, color:'violet' },
+    { id:'leo',    venue:'marquee', name:'Leo',    role:'Bartender', area:'Center bar', min:180, color:'gold' },
+    { id:'maya',   venue:'marquee', name:'Maya',   role:'Doorman', area:'VIP line', min:100, color:'mint' },
+    { id:'sofia',  venue:'pent',    name:'Sofia',  role:'Bottle service', area:'Rooftop tables', min:350, color:'pink' },
+    { id:'ray',    venue:'pent',    name:'Ray',    role:'Bartender', area:'Sky bar', min:220, color:'cyan' }
   ];
-  const PATRON_PHOTOS = ['https://i.pravatar.cc/160?img=33','https://i.pravatar.cc/160?img=15','https://i.pravatar.cc/160?img=60','https://i.pravatar.cc/160?img=5'];
   function avTag(cls, photo, color, name){
     const border = 'border:3px solid '+(color||'var(--line)')+';';
     if(photo) return `<div class="${cls}" style="background:url('${photo}') center/cover;${border}"></div>`;
@@ -438,6 +437,7 @@
   const CLUB_TABS = [['club_house','House','house'],['club_staff','Staff','user'],['club_perks','Perks','star']];
 
   let S = load();
+  if(S.photo && String(S.photo).indexOf('pravatar.cc')>-1){ S.photo = null; save(); }
   function load(){ try{ return JSON.parse(localStorage.getItem('jtt')) || blank(); }catch(e){ return blank(); } }
   function blank(){ return { role:null, name:'', dial:200, live:true, sent:[], regulars:[], clubOn:true, perks:{ entry:true, table:false, promos:false } }; }
   function save(){ try{ localStorage.setItem('jtt', JSON.stringify(S)); }catch(e){} }
@@ -482,7 +482,6 @@
   function pickRole(r){ S.role=r; if(S.name){ save(); enterApp(); } else { show('ob_name'); } }
   function finishOnboard(){
     S.name = document.getElementById('nameInput').value.trim();
-    if(!S.photo) S.photo = PATRON_PHOTOS[Math.floor(Math.random()*PATRON_PHOTOS.length)];
     save();
     enterApp();
   }
@@ -649,9 +648,9 @@
   });
 
   const DEMO_IN = [
-    { name:'Alex', amount:200, color:'pink', reg:true, area:'main bar', photo:'https://i.pravatar.cc/120?img=8',  status:'released', rating:5, tip:40 },
-    { name:'Priya', amount:160, color:'mint', reg:false, area:'main bar', photo:'https://i.pravatar.cc/120?img=49', status:'held', rating:0, tip:0 },
-    { name:'Dev', amount:120, color:'gold', reg:true, area:'main bar', photo:'https://i.pravatar.cc/120?img=11', status:'released', rating:4, tip:0 }
+    { name:'Alex', amount:200, color:'pink', reg:true, area:'main bar', status:'released', rating:5, tip:40 },
+    { name:'Priya', amount:160, color:'mint', reg:false, area:'main bar', status:'held', rating:0, tip:0 },
+    { name:'Dev', amount:120, color:'gold', reg:true, area:'main bar', status:'released', rating:4, tip:0 }
   ];
   function pretipRow(x, fresh){
     const extra = x.tip ? ` +$${x.tip}` : '';
@@ -676,7 +675,7 @@
     c.innerHTML = mine.concat(demo).join('');
   }
   function renderBarRegulars(){
-    const regs=[{n:'Alex',v:1240,c:'pink',p:'https://i.pravatar.cc/120?img=8'},{n:'Dev',v:880,c:'gold',p:'https://i.pravatar.cc/120?img=11'},{n:'Sam',v:600,c:'cyan',p:'https://i.pravatar.cc/120?img=14'}];
+    const regs=[{n:'Alex',v:1240,c:'pink'},{n:'Dev',v:880,c:'gold'},{n:'Sam',v:600,c:'cyan'}];
     document.getElementById('barRegulars').innerHTML = regs.map(r=>(
       `<div class="staff">${avTag('avatar', r.p, COLORS[r.c], r.n)}
         <div class="meta"><div class="name">${r.n} <span class="star">&#9733;</span></div>
